@@ -424,6 +424,10 @@ public:
    bool IsSelected() const;
    bool IsLeader() const;
 
+   // Color for clips in the track
+   void SetColor(const wxString& color);
+   const wxString &GetColor() const;
+
    // Cause this track and following ones in its TrackList to adjust
    void AdjustPositions();
 
@@ -441,6 +445,8 @@ private:
    // This is important only during loading of files
    LinkType mLinkType{ LinkType::None };
    bool mSelected{ false };
+
+   wxString mColor;
 };
 
 ENUMERATE_TRACK_TYPE(Track);

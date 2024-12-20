@@ -35,6 +35,20 @@ and TimeTrack.
 #pragma warning( disable : 4786 )
 #endif
 
+//! TODO AU4 Just for tests
+static const std::vector<wxString> sColors = {
+   "#66A3FF",
+   "#9996FC",
+   "#DA8CCC",
+   "#F08080",
+   "#FF9E65",
+   "#E8C050",
+   "#74BE59",
+   "#34B494",
+   "#48BECF"
+};
+
+
 Track::Track()
 {
 }
@@ -52,6 +66,7 @@ void Track::Init(const Track &orig)
    base = orig;
    CopyGroupProperties(orig);
    mLinkType = orig.mLinkType;
+   mColor = orig.mColor;
 }
 
 void Track::ReparentAllAttachments()
@@ -73,6 +88,16 @@ void Track::SetName( const wxString &n )
       name = n;
       Notify(true);
    }
+}
+
+const wxString& Track::GetColor() const
+{
+   return mColor;
+}
+
+void Track::SetColor(const wxString& color)
+{
+   mColor = color;
 }
 
 bool Track::GetSelected() const
@@ -535,6 +560,10 @@ Track *TrackList::DoAddToHead(const std::shared_ptr<Track> &t)
    auto n = getBegin();
    pTrack->SetOwner(shared_from_this(), n);
    pTrack->SetId( TrackId{ ++sCounter } );
+
+   const size_t index = static_cast<size_t>(std::abs(pTrack->GetId())) % sColors.size();
+   pTrack->SetColor(sColors[index]);
+
    RecalcPositions(n);
    AdditionEvent(n, EventPublicationSynchrony::Asynchronous);
    return front().get();
@@ -557,6 +586,10 @@ Track* TrackList::DoAdd(
    t->SetOwner(shared_from_this(), n);
    if (mAssignsIds && assignId == DoAssignId::Yes)
       t->SetId(TrackId{ ++sCounter });
+
+   const size_t index = static_cast<size_t>(std::abs(t->GetId())) % sColors.size();
+   t->SetColor(sColors[index]);
+
    RecalcPositions(n);
    AdditionEvent(n, synchrony);
    return back().get();
@@ -815,6 +848,9 @@ void Track::WriteCommonXMLAttributes(
       xmlFile.WriteAttr(wxT("name"), GetName());
       xmlFile.WriteAttr(wxT("isSelected"), this->GetSelected());
    }
+
+   xmlFile.WriteAttr(wxT("color"), GetColor());
+
    AttachedTrackObjects::ForEach([&](auto &attachment){
       attachment.WriteXMLAttributes( xmlFile );
    });
@@ -841,6 +877,10 @@ bool Track::HandleCommonXMLAttribute(
    }
    else if (attr == "isSelected" && valueView.TryGet(nValue)) {
       this->SetSelected(nValue != 0);
+      return true;
+   }
+   else if (attr == "color") {
+      SetColor(valueView.ToWString());
       return true;
    }
    return false;
